@@ -1,11 +1,47 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import Problem from "../components/Problem.astro";
+import HowItWorks from "../components/HowItWorks.astro";
+import ForAgents from "../components/ForAgents.astro";
+import WhyTrust from "../components/WhyTrust.astro";
+import Quickstart from "../components/Quickstart.astro";
+import Footer from "../components/Footer.astro";
 ---
 
 <Layout>
-	<Welcome />
+  <Header />
+  <main id="main">
+    <Hero />
+    <Problem />
+    <HowItWorks />
+    <ForAgents />
+    <WhyTrust />
+    <Quickstart />
+  </main>
+  <Footer />
 </Layout>
+
+<script>
+  // Copy-to-clipboard for every CodeBlock. Event delegation keeps this tiny.
+  document.addEventListener("click", async (e) => {
+    const btn = (e.target as HTMLElement)?.closest("[data-copy]");
+    if (!btn) return;
+
+    const block = btn.closest("div.group");
+    const code = block?.querySelector("pre code")?.textContent ?? "";
+    const label = btn.querySelector(".copy-label");
+    const original = label?.textContent ?? "Copy";
+
+    try {
+      await navigator.clipboard.writeText(code);
+      if (label) label.textContent = "Copied";
+    } catch {
+      if (label) label.textContent = "Press ⌘C";
+    }
+    window.setTimeout(() => {
+      if (label) label.textContent = original;
+    }, 1600);
+  });
+</script>

@@ -1,0 +1,92 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+
+const tools = [
+  {
+    name: "salvager_list_versions",
+    kind: "read",
+    body: "List the saved revisions for a file, newest first — each with its content signal (lines, line delta, start signature) so the agent can pick the right one without re-reading every version.",
+  },
+  {
+    name: "salvager_get_version",
+    kind: "read",
+    body: "Fetch the exact contents of one revision. Read-only inspection — the agent confirms it found the version it wants before changing anything.",
+  },
+  {
+    name: "salvager_restore",
+    kind: "write",
+    body: "Restore a file to a chosen revision. First saves the current state as a pre-restore revision, so the restore is itself undoable.",
+  },
+];
+
+const mcpJson = `{
+  "mcpServers": {
+    "salvager": {
+      "command": "salvager",
+      "args": ["mcp"],
+      "cwd": "/path/to/project"
+    }
+  }
+}`;
+---
+
+<section id="agents" class="border-b border-ink-800/60 bg-ink-900/40">
+  <div class="mx-auto max-w-5xl px-6 py-20">
+    <p class="font-mono text-sm text-accent-400">For agents · MCP</p>
+    <h2
+      class="mt-3 max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+    >
+      A recovery layer your agent can drive itself.
+    </h2>
+    <p class="mt-4 max-w-2xl text-lg leading-relaxed text-ink-300">
+      Salvager exposes the history over MCP. An agent that breaks something can
+      discover the timeline, inspect past revisions, and restore the right one —
+      without a human in the loop. Read first, then restore.
+    </p>
+
+    <div class="mt-12 grid gap-10 lg:grid-cols-2">
+      <div class="grid gap-4">
+        {
+          tools.map((t) => (
+            <div class="rounded-lg border border-ink-700 bg-ink-900 p-5">
+              <div class="flex items-center gap-3">
+                <code class="font-mono text-sm text-ink-100">{t.name}</code>
+                <span
+                  class={`rounded-full px-2 py-0.5 font-mono text-[11px] ${
+                    t.kind === "write"
+                      ? "bg-accent-600/20 text-accent-400"
+                      : "bg-ink-700/60 text-ink-300"
+                  }`}
+                >
+                  {t.kind === "write" ? "write" : "read-only"}
+                </span>
+              </div>
+              <p class="mt-2.5 text-sm leading-relaxed text-ink-300">{t.body}</p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="flex flex-col gap-5">
+        <div>
+          <p class="mb-2 font-mono text-xs text-ink-400">
+            Register with any MCP client:
+          </p>
+          <CodeBlock label="json" code={mcpJson} />
+        </div>
+        <div
+          class="rounded-lg border border-accent-600/30 bg-accent-600/[0.07] p-5"
+        >
+          <h3 class="font-mono text-sm font-semibold text-accent-400">
+            No delete over MCP
+          </h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-300">
+            There is no purge or delete tool exposed over MCP. The safety net
+            can't be erased by the thing that might break it. An agent can
+            recover work — it can never destroy the record of it.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

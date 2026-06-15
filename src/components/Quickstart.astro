@@ -1,0 +1,85 @@
+---
+import CodeBlock from "./CodeBlock.astro";
+
+const repo = "https://github.com/usesalvager/salvager";
+const releases = "https://github.com/usesalvager/salvager/releases";
+
+const build = `git clone https://github.com/usesalvager/salvager
+cd salvager
+go build -o salvager .`;
+
+const usage = `# Start watching the current project — capture begins immediately
+salvager watch
+
+# List the recorded versions of a file
+salvager history config.json
+
+# Inspect one version's content (timestamp from history)
+salvager show config.json 1718312445
+
+# Restore a file to a version — itself reversible
+salvager restore config.json 1718312445`;
+---
+
+<section id="quickstart" class="border-b border-ink-800/60 bg-ink-900/40">
+  <div class="mx-auto max-w-5xl px-6 py-20">
+    <p class="font-mono text-sm text-accent-400">Quickstart</p>
+    <h2
+      class="mt-3 max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+    >
+      Up and running in under a minute.
+    </h2>
+
+    <div class="mt-10 grid gap-10 lg:grid-cols-2">
+      <div>
+        <h3 class="mb-3 text-base font-semibold text-ink-100">
+          Build from source
+        </h3>
+        <p class="mb-4 text-sm leading-relaxed text-ink-300">
+          Requires a Go toolchain. The result is a single static binary you can
+          put anywhere on your PATH.
+        </p>
+        <CodeBlock label="shell" code={build} />
+        <p class="mt-4 text-sm leading-relaxed text-ink-400">
+          Prefer a prebuilt binary? The
+          <a
+            href={releases}
+            class="text-accent-400 underline-offset-4 hover:underline"
+            >releases page</a
+          > has v1.0.0 builds for Linux and macOS (amd64 + arm64), each with a
+          SHA-256 checksum. Windows is best-effort from source.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="mb-3 text-base font-semibold text-ink-100">
+          Watch, inspect, restore
+        </h3>
+        <p class="mb-4 text-sm leading-relaxed text-ink-300">
+          One command to start. Everything from there is recovery on your terms.
+        </p>
+        <CodeBlock label="shell" code={usage} />
+        <p class="mt-4 text-sm leading-relaxed text-ink-400">
+          To wire it into an agent over MCP, see
+          <a
+            href="#agents"
+            class="text-accent-400 underline-offset-4 hover:underline"
+            >For agents</a
+          > above.
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-10">
+      <a
+        href={repo}
+        class="inline-flex items-center gap-2 rounded-lg border border-ink-700 px-5 py-3 font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850"
+      >
+        Read the docs on GitHub
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M7 17L17 7M7 7h10v10"></path>
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

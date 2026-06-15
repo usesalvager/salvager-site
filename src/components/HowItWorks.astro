@@ -1,0 +1,57 @@
+---
+const steps = [
+  {
+    n: "01",
+    title: "Watch",
+    body: "Run salvager watch in any project root. No config, no accounts, no cloud. It starts observing the tree immediately.",
+  },
+  {
+    n: "02",
+    title: "Capture every revision",
+    body: "Each time a file changes — your keystrokes or an agent's edit — Salvager saves a new per-file revision into .salvager/. Automatically. Continuously.",
+  },
+  {
+    n: "03",
+    title: "Discover the history",
+    body: "Browse the timeline for any file from the CLI, over MCP, or by hand with plain ls and cat. Every version is there, with a content signal to tell them apart.",
+  },
+  {
+    n: "04",
+    title: "Restore",
+    body: "Roll any file back to any earlier revision. The restore itself first saves the current state, so it's reversible too. Nothing is ever a dead end.",
+  },
+];
+---
+
+<section id="how" class="border-b border-ink-800/60">
+  <div class="mx-auto max-w-5xl px-6 py-20">
+    <p class="font-mono text-sm text-accent-400">How it works</p>
+    <h2
+      class="mt-3 max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+    >
+      A passive watcher, not a workflow you have to remember.
+    </h2>
+    <p class="mt-4 max-w-2xl text-lg leading-relaxed text-ink-300">
+      Capture is automatic. Recovery is whatever you want — CLI, MCP, or your
+      bare hands. The two are decoupled on purpose: the part that protects you
+      never depends on the part that might fail.
+    </p>
+
+    <ol class="mt-12 grid gap-px overflow-hidden rounded-xl border border-ink-700 bg-ink-700 sm:grid-cols-2">
+      {
+        steps.map((s) => (
+          <li class="flex flex-col gap-3 bg-ink-900 p-6 sm:p-7">
+            <div class="flex items-center gap-3">
+              <span class="font-mono text-sm text-accent-400">{s.n}</span>
+              <span class="h-px flex-1 bg-ink-700" />
+              <h3 class="font-mono text-base font-semibold text-ink-100">
+                {s.title}
+              </h3>
+            </div>
+            <p class="leading-relaxed text-ink-300">{s.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
