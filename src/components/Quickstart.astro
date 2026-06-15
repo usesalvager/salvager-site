@@ -8,7 +8,7 @@ const build = `git clone https://github.com/usesalvager/salvager
 cd salvager
 go build -o salvager .`;
 
-const usage = `# Start watching the current project — capture begins immediately
+const usage = `# Start watching the current project (capture begins immediately)
 salvager watch
 
 # List the recorded versions of a file
@@ -17,7 +17,7 @@ salvager history config.json
 # Inspect one version's content (timestamp from history)
 salvager show config.json 1718312445
 
-# Restore a file to a version — itself reversible
+# Restore a file to a version (itself reversible)
 salvager restore config.json 1718312445`;
 ---
 

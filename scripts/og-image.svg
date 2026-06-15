@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#08090b"/>
+  <!-- faint grid motif -->
+  <g stroke="#161a22" stroke-width="1">
+    <line x1="0" y1="158" x2="1200" y2="158"/>
+    <line x1="0" y1="316" x2="1200" y2="316"/>
+    <line x1="0" y1="474" x2="1200" y2="474"/>
+  </g>
+
+  <!-- revision-stack mark -->
+  <g transform="translate(80,90)">
+    <circle cx="14" cy="14" r="9" fill="#18bda9"/>
+    <circle cx="14" cy="46" r="9" fill="#18bda9"/>
+    <circle cx="14" cy="78" r="9" fill="#38d6c4"/>
+    <line x1="14" y1="23" x2="14" y2="37" stroke="#323a49" stroke-width="3"/>
+    <line x1="14" y1="55" x2="14" y2="69" stroke="#323a49" stroke-width="3"/>
+    <rect x="36" y="7"  width="120" height="14" rx="7" fill="#323a49"/>
+    <rect x="36" y="39" width="120" height="14" rx="7" fill="#323a49"/>
+    <rect x="36" y="71" width="120" height="14" rx="7" fill="#7c8597"/>
+    <text x="190" y="58" font-family="monospace" font-size="46" font-weight="700" fill="#e6e9ee">salvager</text>
+  </g>
+
+  <!-- tagline -->
+  <text x="80" y="300" font-family="sans-serif" font-size="74" font-weight="700" fill="#e6e9ee">Let agents edit your code.</text>
+  <text x="80" y="392" font-family="sans-serif" font-size="74" font-weight="700" fill="#38d6c4">Keep every version.</text>
+
+  <!-- subhead -->
+  <text x="80" y="470" font-family="sans-serif" font-size="34" fill="#9aa3b2">A filesystem safety net for AI coding agents.</text>
+
+  <!-- footer line -->
+  <text x="80" y="565" font-family="monospace" font-size="26" fill="#7c8597">salvager.sh   ·   MCP   ·   Apache-2.0</text>
+</svg>

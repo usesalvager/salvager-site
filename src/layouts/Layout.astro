@@ -8,10 +8,47 @@ interface Props {
 
 const {
   title = "Salvager — Let agents edit your code. Keep every version.",
-  description = "A filesystem-level safety net for AI coding agents. A passive watcher saves every file revision automatically, exposed over MCP, so any lost work is recoverable. Captures everything → everything is reversible.",
+  description = "A filesystem safety net for AI coding agents. A passive watcher saves every file revision automatically, so anything an agent breaks, you can get back.",
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL("/og.png", Astro.site);
+
+const repo = "https://github.com/usesalvager/salvager";
+
+// Structured data — SoftwareApplication + Organization. Helps search engines
+// understand what Salvager is (a free, self-hostable dev tool) and can surface
+// rich results.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "Salvager",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "macOS, Linux",
+      description,
+      url: "https://salvager.sh",
+      downloadUrl: `${repo}/releases`,
+      softwareVersion: "1.0.0",
+      license: "https://www.apache.org/licenses/LICENSE-2.0",
+      isAccessibleForFree: true,
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      author: { "@type": "Organization", name: "Salvager", url: "https://salvager.sh" },
+    },
+    {
+      "@type": "Organization",
+      name: "Salvager",
+      url: "https://salvager.sh",
+      logo: new URL("/favicon.svg", Astro.site).href,
+      sameAs: [repo],
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -31,9 +68,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="Salvager" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Salvager, a filesystem safety net for AI coding agents" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body class="bg-ink-950 text-ink-200 font-sans antialiased">
     <a

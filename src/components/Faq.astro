@@ -1,0 +1,80 @@
+---
+// FAQ — targets People-Also-Ask queries and emits FAQPage structured data.
+// Answers are accurate to the project README. Plain <details>/<summary> so it
+// stays keyboard-accessible with zero JavaScript.
+const faqs = [
+  {
+    q: "What happens if an AI agent breaks my code?",
+    a: "The watcher has already saved a revision of the file, automatically, as the edit happened. List the versions, restore the good one, and you're back. The restore itself first saves the current state, so even that is reversible.",
+  },
+  {
+    q: "How is this different from git?",
+    a: "No commits, no staging, nothing to remember. Salvager captures every save in the background, including work you never committed, and complements git rather than replacing it. git is your durable, shared history; Salvager is the always-on local safety net underneath it.",
+  },
+  {
+    q: "Do I need to configure anything?",
+    a: "No. Run salvager watch in any project root. Zero configuration: no accounts, no cloud, no config files. It records an initial revision of every tracked file on startup, then captures every change thereafter.",
+  },
+  {
+    q: "Where is my history stored, and can I read it without the tool?",
+    a: "In a plain .salvager/ directory inside your project. Objects are deduplicated by content hash and revisions are listed in plain logs, so a bare ls and cat recover anything by hand. No proprietary format, no lock-in.",
+  },
+  {
+    q: "Can an AI agent erase my recovery history over MCP?",
+    a: "No. The MCP server exposes exactly three tools: list versions, get a version, and restore. There is no purge or delete over MCP, so the safety net can't be erased by the agent that might break things.",
+  },
+  {
+    q: "What platforms does it run on?",
+    a: "A single static Go binary with no runtime and no dependencies. macOS and Linux (amd64 and arm64), with Windows best-effort from source. Apache-2.0 licensed.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+---
+
+<section id="faq" class="border-b border-ink-800/60">
+  <div class="mx-auto max-w-5xl px-6 py-20">
+    <p class="font-mono text-sm text-accent-400">FAQ</p>
+    <h2
+      class="mt-3 max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+    >
+      Questions, answered plainly.
+    </h2>
+
+    <div class="mt-10 max-w-3xl divide-y divide-ink-800 border-y border-ink-800">
+      {
+        faqs.map((f) => (
+          <details class="group">
+            <summary
+              class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left text-base font-medium text-ink-100 marker:hidden"
+            >
+              {f.q}
+              <svg
+                class="h-5 w-5 shrink-0 text-ink-400 transition-transform duration-200 group-open:rotate-45"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </summary>
+            <p class="pb-5 pr-9 leading-relaxed text-ink-300">{f.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqJsonLd)} />
+</section>

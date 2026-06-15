@@ -5,12 +5,12 @@ const tools = [
   {
     name: "salvager_list_versions",
     kind: "read",
-    body: "List the saved revisions for a file, newest first — each with its content signal (lines, line delta, start signature) so the agent can pick the right one without re-reading every version.",
+    body: "List the saved revisions for a file, newest first. Each carries its content signal (lines, line delta, start signature) so the agent can pick the right one without re-reading every version.",
   },
   {
     name: "salvager_get_version",
     kind: "read",
-    body: "Fetch the exact contents of one revision. Read-only inspection — the agent confirms it found the version it wants before changing anything.",
+    body: "Fetch the exact contents of one revision. Read-only inspection, so the agent confirms it found the version it wants before changing anything.",
   },
   {
     name: "salvager_restore",
@@ -40,8 +40,8 @@ const mcpJson = `{
     </h2>
     <p class="mt-4 max-w-2xl text-lg leading-relaxed text-ink-300">
       Salvager exposes the history over MCP. An agent that breaks something can
-      discover the timeline, inspect past revisions, and restore the right one —
-      without a human in the loop. Read first, then restore.
+      discover the timeline, inspect past revisions, and restore the right one,
+      no human in the loop. Read first, then restore.
     </p>
 
     <div class="mt-12 grid gap-10 lg:grid-cols-2">
@@ -83,7 +83,7 @@ const mcpJson = `{
           <p class="mt-2 text-sm leading-relaxed text-ink-300">
             There is no purge or delete tool exposed over MCP. The safety net
             can't be erased by the thing that might break it. An agent can
-            recover work — it can never destroy the record of it.
+            recover work, but never destroy the record of it.
           </p>
         </div>
       </div>
