@@ -3,9 +3,11 @@ import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 
-// TODO: replace these with the real booking link and inbox before launch.
-const calLink = "https://cal.com/salvager/intro";
-const email = "enterprise@salvager.sh";
+// Contact runs through Web3Forms (static-friendly relay). The destination
+// inbox is whatever address was used to generate this access key at
+// web3forms.com — swap the key to change where submissions land.
+// TODO: paste the real Web3Forms access key before launch.
+const web3formsKey = "62e8369d-ecf1-45f1-b3a3-20c9f6db36e9";
 const repo = "https://github.com/usesalvager/salvager";
 
 const tiers = [
@@ -35,7 +37,7 @@ const tiers = [
       "Coverage tuning for large or awkward trees",
       "A written response-time commitment, included",
     ],
-    cta: { label: "Talk to us", href: calLink, primary: true },
+    cta: { label: "Talk to us", href: "#contact", primary: true },
     highlight: true,
   },
   {
@@ -50,7 +52,7 @@ const tiers = [
       "Compliance pack: integrity evidence and a signable audit trail",
       "Named contact and custom SLA on the contract",
     ],
-    cta: { label: "Talk to us", href: calLink, primary: false },
+    cta: { label: "Talk to us", href: "#contact", primary: false },
     highlight: false,
   },
 ];
@@ -96,19 +98,19 @@ const check = `<path d="M20 6 9 17l-5-5"/>`;
         </p>
         <div class="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
           <a
-            href={calLink}
+            href="#contact"
             class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-500 px-5 py-3 font-medium text-ink-950 transition-colors hover:bg-accent-400"
           >
-            Book a call
+            Tell us what you're running
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M5 12h14M13 5l7 7-7 7"></path>
             </svg>
           </a>
           <a
-            href={`mailto:${email}`}
+            href={repo}
             class="inline-flex items-center justify-center gap-2 rounded-lg border border-ink-700 px-5 py-3 font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850"
           >
-            {email}
+            View the source
           </a>
         </div>
       </div>
@@ -210,30 +212,121 @@ const check = `<path d="M20 6 9 17l-5-5"/>`;
     </section>
 
     <!-- Contact -->
-    <section class="border-b border-ink-800/60">
-      <div class="mx-auto max-w-5xl px-6 py-20 text-center">
+    <section id="contact" class="border-b border-ink-800/60 scroll-mt-24">
+      <div class="mx-auto max-w-2xl px-6 py-20">
         <h2
-          class="mx-auto max-w-2xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+          class="text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
         >
           Tell us what you are running, and we will tell you how we can help.
         </h2>
-        <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href={calLink}
-            class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-500 px-6 py-3 font-medium text-ink-950 transition-colors hover:bg-accent-400"
-          >
-            Book a call
-          </a>
-          <a
-            href={`mailto:${email}`}
-            class="inline-flex items-center justify-center gap-2 rounded-lg border border-ink-700 px-6 py-3 font-medium text-ink-100 transition-colors hover:border-ink-600 hover:bg-ink-850"
-          >
-            {email}
-          </a>
-        </div>
+        <p class="mt-3 text-base leading-relaxed text-ink-400">
+          A short message is enough. No sales pressure, no obligation. We reply
+          from a human, usually within a day.
+        </p>
+
+        <form id="contact-form" class="mt-10 flex flex-col gap-5">
+          <input type="hidden" name="access_key" value={web3formsKey} />
+          <input type="hidden" name="subject" value="Salvager enterprise enquiry" />
+          <input type="hidden" name="from_name" value="Salvager site" />
+          <!-- Honeypot: bots fill this, humans never see it. -->
+          <input type="checkbox" name="botcheck" class="hidden" style="display:none" tabindex="-1" autocomplete="off" />
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-sm font-medium text-ink-200">Name</span>
+              <input
+                type="text"
+                name="name"
+                required
+                autocomplete="name"
+                class="rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-ink-100 placeholder:text-ink-500 transition-colors focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
+              />
+            </label>
+            <label class="flex flex-col gap-1.5">
+              <span class="text-sm font-medium text-ink-200">Work email</span>
+              <input
+                type="email"
+                name="email"
+                required
+                autocomplete="email"
+                class="rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-ink-100 placeholder:text-ink-500 transition-colors focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
+              />
+            </label>
+          </div>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-ink-200">
+              Company <span class="text-ink-500">(optional)</span>
+            </span>
+            <input
+              type="text"
+              name="company"
+              autocomplete="organization"
+              class="rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-ink-100 placeholder:text-ink-500 transition-colors focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
+            />
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-ink-200">
+              What are you running, and what do you need?
+            </span>
+            <textarea
+              name="message"
+              required
+              rows="5"
+              placeholder="Environment, team size, what you're trying to make audit-ready or deploy..."
+              class="resize-y rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-ink-100 placeholder:text-ink-500 transition-colors focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
+            ></textarea>
+          </label>
+
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              type="submit"
+              class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-500 px-6 py-3 font-medium text-ink-950 transition-colors hover:bg-accent-400 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Send
+            </button>
+            <p id="contact-status" class="text-sm text-ink-400" role="status" aria-live="polite"></p>
+          </div>
+        </form>
       </div>
     </section>
   </main>
 
   <Footer />
 </Layout>
+
+<script>
+  const form = document.getElementById("contact-form") as HTMLFormElement | null;
+  const status = document.getElementById("contact-status");
+  if (form && status) {
+    const button = form.querySelector("button[type=submit]") as HTMLButtonElement;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      button.disabled = true;
+      status.textContent = "Sending...";
+      status.className = "text-sm text-ink-400";
+      try {
+        const res = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          body: new FormData(form),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          form.reset();
+          status.textContent = "Thanks — we'll get back to you shortly.";
+          status.className = "text-sm text-accent-400";
+        } else {
+          throw new Error(data.message || "Request failed");
+        }
+      } catch {
+        status.textContent =
+          "Something went wrong. Email us directly and we'll sort it out.";
+        status.className = "text-sm text-red-400";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>
