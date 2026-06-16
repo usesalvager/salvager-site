@@ -1,0 +1,506 @@
+---
+// Protects.astro — the "what it protects" section.
+//
+// One auto-playing, looping terminal that simulates an AI coding-agent session
+// (Claude Code style): the agent does valuable, unsaved work, destroys it, finds
+// that the normal safety net cannot bring it back, then recovers it with
+// Salvager. Three tabs swap the scenario for three audiences.
+//
+// FIDELITY NOTES — where each scenario comes from:
+//
+//   git / uncommitted  — REAL. Mirrors salvager-go's
+//     TestE2E_A10_2_RecoverUncommittedWorkGitCannot (e2e_test.go) and
+//     docs/testing/GUIDE_A10_2.md + setup_a10_2.sh. The file is stats.py with an
+//     uncommitted, never-staged median(); the disaster is `git reset --hard
+//     HEAD`; the git-cannot proofs are `git reflog` and `git fsck --unreachable
+//     --lost-found --no-reflogs`; recovery is the documented CLI:
+//     `salvager history <file>` then `salvager restore <file> <ts>`. Command
+//     output matches main.go (history table + stderr raw-ms hint; restore lines).
+//
+//   dataset / csv  — ILLUSTRATIVE (not backed by a test). A pandas clean step
+//     overwrites a clean CSV in place after dropna() nukes most rows; the CSV is
+//     gitignored so git has nothing. Same real Salvager CLI recovers it.
+//
+//   document  — ILLUSTRATIVE (not backed by a test). An agent rewrites a section
+//     of a plain markdown file with weaker prose; no app-level history exists.
+//     Recovered with `salvager show` (inspect) then `salvager restore`.
+//
+// Both illustrative scenarios use only real Salvager verbs and realistic shell
+// output, in the same spirit as the A10.2 artifact. Kept honest on purpose.
+//
+// Line kinds: a=agent message, c=shell command, o=command output,
+//   x=loss/failure beat, v=recovery/success beat, h=comment, b=blank spacer.
+
+const scenarios = [
+  {
+    id: "git",
+    tab: "git / uncommitted",
+    file: "stats.py",
+    sr: "Recovering uncommitted work that git reset --hard destroyed.",
+    lines: [
+      { k: "h", t: "extend stats.py with a median() helper and tests" },
+      { k: "a", t: "Added median() to stats.py with two tests. Running them." },
+      { k: "c", t: "python -m pytest -q" },
+      { k: "o", t: "....                                          [100%]" },
+      { k: "o", t: "4 passed in 0.03s" },
+      { k: "c", t: "git status --short" },
+      { k: "o", t: " M stats.py" },
+      { k: "o", t: " M test_stats.py" },
+      { k: "a", t: "median() works and the tests pass. Not committed yet.", p: 1300 },
+      { k: "b", t: "" },
+      { k: "a", t: "Tidying the working tree before the next change." },
+      { k: "c", t: "git reset --hard HEAD" },
+      { k: "o", t: "HEAD is now at 9f3c1a2 Initial: mean() with tests" },
+      { k: "c", t: "grep median stats.py" },
+      { k: "o", t: "(no match)" },
+      { k: "x", t: "median() is gone from disk. It was never staged.", p: 1700 },
+      { k: "a", t: "Trying to get it back through git." },
+      { k: "c", t: "git reflog" },
+      { k: "o", t: "9f3c1a2 HEAD@{0}: reset: moving to HEAD" },
+      { k: "o", t: "9f3c1a2 HEAD@{1}: commit (initial): Initial: mean() with tests" },
+      { k: "c", t: "git fsck --unreachable --lost-found --no-reflogs" },
+      { k: "o", t: "(no dangling blobs)" },
+      { k: "x", t: "git never hashed the edit, so it has nothing to restore.", p: 1900 },
+      { k: "b", t: "" },
+      { k: "a", t: "Salvager watches the filesystem. It saved the edit the moment it hit disk." },
+      { k: "c", t: "salvager history stats.py" },
+      { k: "o", t: "TIMESTAMP            HASH     LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-16 14:07:55  a1b2c3d  modify      18     +11     \"def median(values):\"" },
+      { k: "o", t: "2026-06-16 14:02:10  4e9d2f0  first-seen  7      -       \"def mean(values):\"" },
+      { k: "o", t: "restore with: salvager restore stats.py <timestamp-ms>" },
+      { k: "o", t: "  1781964475000  modify" },
+      { k: "o", t: "  1781964130000  first-seen" },
+      { k: "a", t: "The modify revision holds median(). Restoring it." },
+      { k: "c", t: "salvager restore stats.py 1781964475000" },
+      { k: "o", t: "restored stats.py to revision 1781964475000" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781964900000" },
+      { k: "c", t: "python -m pytest -q" },
+      { k: "o", t: "4 passed in 0.03s" },
+      { k: "v", t: "median() is back, byte for byte. Salvager had it the whole time.", p: 600 },
+    ],
+  },
+  {
+    id: "csv",
+    tab: "dataset / csv",
+    file: "customers.csv",
+    sr: "Recovering a clean CSV after an in-place overwrite dropped most rows.",
+    lines: [
+      { k: "h", t: "clean customers.csv: parse dates, drop the stray index column" },
+      { k: "a", t: "Loading the dataset to check its shape." },
+      { k: "c", t: "python -c \"import pandas as pd; print(pd.read_csv('customers.csv').shape)\"" },
+      { k: "o", t: "(10432, 8)" },
+      { k: "a", t: "10,432 rows, 8 columns. Running the cleaning script.", p: 1200 },
+      { k: "b", t: "" },
+      { k: "c", t: "python clean.py" },
+      { k: "o", t: "wrote customers.csv" },
+      { k: "c", t: "wc -l customers.csv" },
+      { k: "o", t: "313 customers.csv" },
+      { k: "x", t: "dropna() removed every row with any blank cell. 10,120 rows gone.", p: 1700 },
+      { k: "a", t: "The script overwrote the file in place. Looking for a backup." },
+      { k: "c", t: "git status --short" },
+      { k: "o", t: "(nothing — customers.csv is in .gitignore)" },
+      { k: "x", t: "No prior copy on disk and nothing in git. The clean data is gone.", p: 1900 },
+      { k: "b", t: "" },
+      { k: "a", t: "Salvager captured the file before the overwrite. Checking its history." },
+      { k: "c", t: "salvager history customers.csv" },
+      { k: "o", t: "TIMESTAMP            HASH     LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-16 11:48:03  7c1e9a4  modify      313    -10120  \"id,email,signup_date\"" },
+      { k: "o", t: "2026-06-16 11:31:20  b2f08d6  first-seen  10433  -       \"id,email,signup_date\"" },
+      { k: "o", t: "restore with: salvager restore customers.csv <timestamp-ms>" },
+      { k: "o", t: "  1781951280000  modify" },
+      { k: "o", t: "  1781950280000  first-seen" },
+      { k: "a", t: "The first-seen revision is the full file. Restoring it." },
+      { k: "c", t: "salvager restore customers.csv 1781950280000" },
+      { k: "o", t: "restored customers.csv to revision 1781950280000" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781952600000" },
+      { k: "c", t: "wc -l customers.csv" },
+      { k: "o", t: "10433 customers.csv" },
+      { k: "v", t: "All 10,432 rows back. The clean dataset never touched git, but Salvager had it.", p: 600 },
+    ],
+  },
+  {
+    id: "doc",
+    tab: "document",
+    file: "overview.md",
+    sr: "Restoring a documentation section an agent rewrote with weaker prose.",
+    lines: [
+      { k: "h", t: "tighten the Architecture section of overview.md" },
+      { k: "a", t: "Rewriting the Architecture section to be more concise." },
+      { k: "c", t: "wc -l overview.md" },
+      { k: "o", t: "214 overview.md" },
+      { k: "a", t: "Replaced lines 40-96 with a shorter draft.", p: 1300 },
+      { k: "c", t: "wc -l overview.md" },
+      { k: "o", t: "168 overview.md" },
+      { k: "x", t: "The rewrite dropped the data-flow walkthrough and the failure-mode notes.", p: 1700 },
+      { k: "a", t: "It is a plain file. The editor has no undo across sessions." },
+      { k: "x", t: "The stronger original prose is gone from disk.", p: 1900 },
+      { k: "b", t: "" },
+      { k: "a", t: "Salvager keeps a revision per save. Listing them." },
+      { k: "c", t: "salvager history overview.md" },
+      { k: "o", t: "TIMESTAMP            HASH     LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-16 09:22:41  d4a7b10  modify      168    -46     \"# Project overview\"" },
+      { k: "o", t: "2026-06-16 09:05:12  1f6c83e  first-seen  214    -       \"# Project overview\"" },
+      { k: "a", t: "Inspecting the earlier revision before I touch anything." },
+      { k: "c", t: "salvager show overview.md 1781938512000" },
+      { k: "o", t: "## Architecture" },
+      { k: "o", t: "Writes flow through the watcher, which debounces bursts, hashes" },
+      { k: "o", t: "each file, and appends a revision. Recovery reads that log back ..." },
+      { k: "a", t: "That is the fuller version. Restoring it." },
+      { k: "c", t: "salvager restore overview.md 1781938512000" },
+      { k: "o", t: "restored overview.md to revision 1781938512000" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781939400000" },
+      { k: "v", t: "The original Architecture section is back. Salvager had every revision.", p: 600 },
+    ],
+  },
+];
+
+// Visible marker per line kind. Decorative, so aria-hidden in the markup.
+const marker = (k) =>
+  k === "a" ? "●" : k === "c" ? "$" : k === "o" ? "⎿" : k === "x" ? "✗" : k === "v" ? "✓" : k === "h" ? "#" : "";
+---
+
+<section id="protects" class="border-b border-ink-800/60 bg-ink-900/40">
+  <div class="mx-auto max-w-5xl px-6 py-20">
+    <p class="font-mono text-sm text-accent-400">What it protects</p>
+    <h2
+      class="mt-3 max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+    >
+      The work your safety net was never built to catch.
+    </h2>
+    <p class="mt-4 max-w-2xl text-lg leading-relaxed text-ink-300">
+      Watch an agent do real work, destroy it, and find that git, the filesystem,
+      and the editor have nothing to give back. Then watch Salvager hand it over,
+      unharmed. Pick a case.
+    </p>
+
+    <div class="mt-10" data-protect>
+      {/* Tabs */}
+      <div
+        class="flex flex-wrap gap-2"
+        role="tablist"
+        aria-label="Recovery scenarios"
+      >
+        {
+          scenarios.map((s, i) => (
+            <button
+              type="button"
+              role="tab"
+              id={`tab-${s.id}`}
+              aria-controls={`panel-${s.id}`}
+              aria-selected={i === 0 ? "true" : "false"}
+              tabindex={i === 0 ? "0" : "-1"}
+              data-tab={s.id}
+              class="rounded-md border border-ink-700 bg-ink-900 px-3.5 py-2 font-mono text-sm text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100 aria-selected:border-accent-600/60 aria-selected:bg-accent-600/10 aria-selected:text-accent-400"
+            >
+              {s.tab}
+            </button>
+          ))
+        }
+      </div>
+
+      {/* Terminal panels */}
+      {
+        scenarios.map((s, i) => (
+          <div
+            id={`panel-${s.id}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${s.id}`}
+            data-panel={s.id}
+            hidden={i !== 0}
+            class="mt-4"
+          >
+            <div class="overflow-hidden rounded-xl border border-ink-700 bg-ink-950/80 shadow-2xl shadow-black/40">
+              {/* Title bar */}
+              <div class="flex items-center gap-2 border-b border-ink-800 bg-ink-900/80 px-4 py-2">
+                <span class="flex gap-1.5" aria-hidden="true">
+                  <span class="h-2.5 w-2.5 rounded-full bg-ink-700" />
+                  <span class="h-2.5 w-2.5 rounded-full bg-ink-700" />
+                  <span class="h-2.5 w-2.5 rounded-full bg-ink-700" />
+                </span>
+                <span class="ml-2 font-mono text-xs text-ink-400">
+                  claude — agent session — {s.file}
+                </span>
+              </div>
+
+              {/* Stream */}
+              <div class="term px-4 py-3 sm:px-5">
+                <p class="sr-only">{s.sr}</p>
+                <div
+                  class="term-stream font-mono text-[12.5px] leading-normal sm:text-[13px]"
+                  data-stream
+                >
+                  {s.lines.map((ln) => (
+                    <div
+                      class={`term-line kind-${ln.k}`}
+                      data-pause={ln.p ?? ""}
+                    >
+                      {ln.k === "b" ? (
+                        <span aria-hidden="true"> </span>
+                      ) : (
+                        <>
+                          <span class="mk" aria-hidden="true">{marker(ln.k)}</span>
+                          <span class="tx">{ln.t}</span>
+                          <span class="caret" aria-hidden="true" />
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+
+      <p class="mt-3 font-mono text-xs text-ink-500">
+        Replays automatically. The git case mirrors Salvager's A10.2 end-to-end
+        test, command for command.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .term-stream {
+    /* Reserve height so the looping reveal does not jump the page. */
+    min-height: 20.5rem;
+  }
+  .term-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5ch;
+    padding: 0;
+    line-height: 1.5;
+  }
+  .term-line.kind-b {
+    height: 0.45rem;
+  }
+  /* Fixed marker column: every marker sits at the same x, and every text
+     column starts at the same x, so the stream reads as two clean columns. */
+  .mk {
+    flex: none;
+    width: 1.2ch;
+    text-align: left;
+    color: var(--color-ink-600);
+  }
+  .tx {
+    color: var(--color-ink-300);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  /* Agent messages: teal bullet, brighter text — the agent "speaking". */
+  .kind-a .mk {
+    color: var(--color-accent-400);
+  }
+  .kind-a .tx {
+    color: var(--color-ink-100);
+  }
+  /* Shell commands: dim prompt, bright command. */
+  .kind-c .mk {
+    color: var(--color-ink-500, #5b6473);
+  }
+  .kind-c .tx {
+    color: var(--color-ink-100);
+  }
+  /* Command output: muted. The ⎿ marker sits in the shared marker column. */
+  .kind-o .tx {
+    color: var(--color-ink-400);
+  }
+  /* Comment header line. */
+  .kind-h .tx {
+    color: var(--color-ink-500, #5b6473);
+    font-style: italic;
+  }
+  /* The loss beat: a muted amber alert — the one non-teal accent, used only
+     for the "it's gone" moments. Desaturated to fit the dark theme. */
+  .kind-x .mk,
+  .kind-x .tx {
+    --color-warn: #e0a35e;
+    color: var(--color-warn);
+  }
+  /* The recovery beat: teal, the site's "recoverable / safe" accent. */
+  .kind-v .mk,
+  .kind-v .tx {
+    color: var(--color-accent-400);
+  }
+
+  /* Blinking caret, shown only on the line currently being revealed. */
+  .caret {
+    display: none;
+    width: 0.55ch;
+    height: 1.05em;
+    margin-left: 0.1ch;
+    transform: translateY(0.15em);
+    background: var(--color-accent-400);
+  }
+
+  /* --- Animated mode (added by JS only when motion is allowed) --- */
+  .term.is-animated .term-line {
+    opacity: 0;
+  }
+  .term.is-animated .term-line.is-visible {
+    opacity: 1;
+    transition: opacity 0.14s ease-out;
+  }
+  .term.is-animated .term-line.is-current .caret {
+    display: inline-block;
+    animation: term-blink 1s step-end infinite;
+  }
+
+  @keyframes term-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Reduced motion: never animate, never blink. Everything stays visible — the
+     fully resolved state — even if JS ran. */
+  @media (prefers-reduced-motion: reduce) {
+    .term.is-animated .term-line {
+      opacity: 1;
+      transition: none;
+    }
+    .caret {
+      display: none !important;
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  // One self-contained player per terminal stream. Pure JS/CSS, no library:
+  // it reveals lines in sequence, holds on the resolved state, then loops.
+  // Accessibility: all text is real DOM text, present whether or not JS runs;
+  // animation is layered on top. Reduced motion is honored by leaving every
+  // line visible and skipping the player entirely.
+  const reduceMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  // Per-kind base dwell time (ms) before the next line appears. Output streams
+  // fast; agent messages and commands breathe a little.
+  const basePause = (kind: string) =>
+    ({ a: 700, c: 560, o: 110, x: 1500, v: 1400, h: 650, b: 90 })[kind] ?? 400;
+  const END_HOLD = 3200; // pause on the resolved frame before restarting
+
+  function makePlayer(stream: HTMLElement) {
+    const lines = Array.from(
+      stream.querySelectorAll<HTMLElement>(".term-line"),
+    );
+    let i = 0;
+    let timer: number | undefined;
+    let running = false;
+
+    const clear = () => {
+      lines.forEach((l) => l.classList.remove("is-visible", "is-current"));
+    };
+
+    const step = () => {
+      if (i > 0) lines[i - 1]?.classList.remove("is-current");
+      if (i >= lines.length) {
+        timer = window.setTimeout(() => {
+          clear();
+          i = 0;
+          step();
+        }, END_HOLD);
+        return;
+      }
+      const line = lines[i];
+      const kind = (line.className.match(/kind-(\w)/) || [])[1] || "o";
+      line.classList.add("is-visible");
+      if (kind !== "b" && kind !== "o") line.classList.add("is-current");
+      const override = Number(line.dataset.pause);
+      const pause = override > 0 ? override : basePause(kind);
+      i++;
+      timer = window.setTimeout(step, pause);
+    };
+
+    return {
+      start() {
+        if (running) return;
+        running = true;
+        clear();
+        i = 0;
+        step();
+      },
+      stop() {
+        running = false;
+        if (timer) window.clearTimeout(timer);
+        timer = undefined;
+      },
+    };
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-protect]").forEach((group) => {
+    const tabs = Array.from(
+      group.querySelectorAll<HTMLElement>('[role="tab"]'),
+    );
+    const panels = new Map<string, HTMLElement>();
+    const players = new Map<string, ReturnType<typeof makePlayer>>();
+
+    group.querySelectorAll<HTMLElement>("[data-panel]").forEach((panel) => {
+      const id = panel.dataset.panel!;
+      panels.set(id, panel);
+      const term = panel.querySelector<HTMLElement>(".term")!;
+      const stream = panel.querySelector<HTMLElement>("[data-stream]")!;
+      if (!reduceMotion) {
+        term.classList.add("is-animated");
+        players.set(id, makePlayer(stream));
+      }
+    });
+
+    let activeId = tabs[0]?.dataset.tab ?? "";
+    let visible = false;
+
+    const select = (id: string, focus = false) => {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.tab === id;
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+      });
+      panels.forEach((panel, pid) => {
+        panel.hidden = pid !== id;
+      });
+      // Swap the running animation to the newly visible panel.
+      if (!reduceMotion) {
+        players.get(activeId)?.stop();
+        if (visible) players.get(id)?.start();
+      }
+      activeId = id;
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => select(tab.dataset.tab!));
+      tab.addEventListener("keydown", (e) => {
+        const idx = tabs.indexOf(tab);
+        let next = -1;
+        if (e.key === "ArrowRight" || e.key === "ArrowDown")
+          next = (idx + 1) % tabs.length;
+        else if (e.key === "ArrowLeft" || e.key === "ArrowUp")
+          next = (idx - 1 + tabs.length) % tabs.length;
+        else if (e.key === "Home") next = 0;
+        else if (e.key === "End") next = tabs.length - 1;
+        if (next >= 0) {
+          e.preventDefault();
+          select(tabs[next].dataset.tab!, true);
+        }
+      });
+    });
+
+    // Only animate while the section is on screen; pause when it scrolls away.
+    if (!reduceMotion) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            visible = entry.isIntersecting;
+            if (visible) players.get(activeId)?.start();
+            else players.get(activeId)?.stop();
+          }
+        },
+        { threshold: 0.25 },
+      );
+      io.observe(group);
+    }
+  });
+</script>
