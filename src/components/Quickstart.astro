@@ -4,11 +4,14 @@ import CodeBlock from "./CodeBlock.astro";
 const repo = "https://github.com/usesalvager/salvager";
 const releases = "https://github.com/usesalvager/salvager/releases";
 
-const build = `git clone https://github.com/usesalvager/salvager
-cd salvager
-go build -o salvager .`;
+const installScript = `curl -fsSL https://raw.githubusercontent.com/usesalvager/salvager/main/install.sh | sh`;
 
-const usage = `# Start watching the current project (capture begins immediately)
+const brew = `brew install usesalvager/tap/salvager`;
+
+const usage = `# One-command onboarding: registers the MCP server and updates your agent config
+salvager init
+
+# Start watching the current project (capture begins immediately)
 salvager watch
 
 # List the recorded versions of a file
@@ -33,21 +36,32 @@ salvager restore config.json 1718312445`;
     <div class="mt-10 grid gap-10 lg:grid-cols-2">
       <div>
         <h3 class="mb-3 text-base font-semibold text-ink-100">
-          Build from source
+          Install
         </h3>
         <p class="mb-4 text-sm leading-relaxed text-ink-300">
-          Requires a Go toolchain. The result is a single static binary you can
-          put anywhere on your PATH.
+          The install script drops a single static binary on your PATH. It
+          never uses sudo, sends no telemetry, and doesn't touch your shell
+          config. macOS and Linux.
         </p>
-        <CodeBlock label="shell" code={build} />
+        <CodeBlock label="shell" code={installScript} />
+        <p class="mb-3 mt-6 text-sm leading-relaxed text-ink-300">
+          On Homebrew (macOS/Linux):
+        </p>
+        <CodeBlock label="shell" code={brew} />
         <p class="mt-4 text-sm leading-relaxed text-ink-400">
-          Prefer a prebuilt binary? The
+          Prefer to build it yourself? With a Go toolchain,
+          <code class="text-ink-200">go build -o salvager .</code> from a
+          <a
+            href={repo}
+            class="text-accent-400 underline-offset-4 hover:underline"
+            >clone</a
+          >. Prebuilt binaries for Linux and macOS (amd64 + arm64), each with a
+          SHA-256 checksum, are on the
           <a
             href={releases}
             class="text-accent-400 underline-offset-4 hover:underline"
             >releases page</a
-          > has v1.0.0 builds for Linux and macOS (amd64 + arm64), each with a
-          SHA-256 checksum. Windows is best-effort from source.
+          >. Windows is best-effort from source.
         </p>
       </div>
 
