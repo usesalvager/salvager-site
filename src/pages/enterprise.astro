@@ -9,75 +9,11 @@ import Footer from "../components/Footer.astro";
 // TODO: paste the real Web3Forms access key before launch.
 const web3formsKey = "62e8369d-ecf1-45f1-b3a3-20c9f6db36e9";
 const repo = "https://github.com/usesalvager/salvager";
-
-const tiers = [
-  {
-    name: "Community",
-    audience: "Solo devs and anyone running it locally.",
-    price: "Free, forever",
-    priceNote: "Apache-2.0. No accounts, no cloud.",
-    features: [
-      "The full static binary, every feature",
-      "All three MCP tools, full local history",
-      "Whole-tree coverage and reversible restore",
-      "Community support on GitHub issues",
-    ],
-    cta: { label: "Get started", href: repo, primary: false },
-    highlight: false,
-  },
-  {
-    name: "Supported",
-    audience: "Teams putting it into real production.",
-    price: "Contact us",
-    priceNote: "Scope and price set after a short call.",
-    features: [
-      "Everything in Community",
-      "Hands-on help getting it deployed and supervised",
-      "Wiring into your existing tooling and CI",
-      "Coverage tuning for large or awkward trees",
-      "A written response-time commitment, included",
-    ],
-    cta: { label: "Talk to us", href: "#contact", primary: true },
-    highlight: true,
-  },
-  {
-    name: "Enterprise + Compliance",
-    audience: "Regulated orgs: finance, health, public sector, industrial.",
-    price: "Contact us",
-    priceNote: "Custom scope, set with you.",
-    features: [
-      "Everything in Supported",
-      "Air-gapped and supervised multi-machine deployment",
-      "Integration with proprietary stacks (MES, CNC, PLC)",
-      "Compliance pack: integrity evidence and a signable audit trail",
-      "Named contact and custom SLA on the contract",
-    ],
-    cta: { label: "Talk to us", href: "#contact", primary: false },
-    highlight: false,
-  },
-];
-
-const services = [
-  {
-    title: "Integration and deployment",
-    body: "Making self-hosted real in a hostile environment: air-gapped installs, the watcher running as a supervised service across many machines, wiring into existing tooling and proprietary MES, CNC and PLC stacks, hardening. This is project work, not a subscription, and it is where the real value sits.",
-  },
-  {
-    title: "Compliance pack",
-    body: "The documentation and evidence that Salvager fits an audited change-management process: integrity evidence, an audit trail a human can sign off, and the material a regulated buyer needs to clear their own audit. The pack is a paid deliverable, not part of the open repo.",
-  },
-  {
-    title: "Support and SLA",
-    body: "Not a promise to fix bugs, since the binary barely breaks. It is a human contractually obligated to respond if it ever fails in production. It comes bundled with an enterprise engagement, the clause that lets procurement sign, not something sold on its own.",
-  },
-];
-
-const check = `<path d="M20 6 9 17l-5-5"/>`;
 ---
 
 <Layout
-  title="Salvager for teams: support, deployment and compliance"
-  description="The tool stays free and open. When you need guaranteed response times, hands-on deployment, or audit-ready evidence, we work with you directly."
+  title="Salvager for teams: free and open, talk to us if you need more"
+  description="The full binary, every feature, free and open-source forever. If you run Salvager across a team or in production and need more than the open binary gives you, tell us what you need."
 >
   <Header />
 
@@ -85,16 +21,15 @@ const check = `<path d="M20 6 9 17l-5-5"/>`;
     <!-- Hero -->
     <section class="border-b border-ink-800/60">
       <div class="mx-auto max-w-5xl px-6 pt-20 pb-16 sm:pt-24">
-        <p class="font-mono text-sm text-accent-400">For teams and regulated orgs</p>
+        <p class="font-mono text-sm text-accent-400">For teams and production</p>
         <h1
           class="mt-4 max-w-3xl text-balance text-4xl font-semibold leading-[1.1] tracking-tight text-ink-100 sm:text-5xl"
         >
-          Run Salvager with a human behind it.
+          Salvager is free and open-source.
         </h1>
         <p class="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-ink-300">
-          The tool stays free and open, the same binary everyone runs. When you
-          need guaranteed response times, hands-on deployment, or evidence your
-          auditor will accept, we work with you directly.
+          The full binary, every feature, forever. Apache-2.0, self-hosted, no
+          telemetry. Nothing here costs money, and nothing phones home.
         </p>
         <div class="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
           <a
@@ -116,98 +51,29 @@ const check = `<path d="M20 6 9 17l-5-5"/>`;
       </div>
     </section>
 
-    <!-- Tiers -->
-    <section class="border-b border-ink-800/60">
-      <div class="mx-auto max-w-5xl px-6 py-20">
-        <div class="grid gap-5 lg:grid-cols-3">
-          {
-            tiers.map((t) => (
-              <div
-                class={`flex flex-col rounded-xl border bg-ink-900 p-7 ${
-                  t.highlight
-                    ? "border-accent-600/50 ring-1 ring-accent-600/30"
-                    : "border-ink-700"
-                }`}
-              >
-                {t.highlight && (
-                  <span class="mb-3 inline-flex w-fit rounded-full bg-accent-600/20 px-2.5 py-0.5 font-mono text-[11px] text-accent-400">
-                    Most teams start here
-                  </span>
-                )}
-                <h2 class="text-lg font-semibold text-ink-100">{t.name}</h2>
-                <p class="mt-1 text-sm leading-relaxed text-ink-400">
-                  {t.audience}
-                </p>
-                <div class="mt-5">
-                  <p class="font-mono text-xl text-ink-100">{t.price}</p>
-                  <p class="mt-1 text-xs text-ink-400">{t.priceNote}</p>
-                </div>
-                <ul class="mt-6 flex flex-1 flex-col gap-2.5">
-                  {t.features.map((f) => (
-                    <li class="flex items-start gap-2.5 text-sm leading-relaxed text-ink-300">
-                      <svg
-                        class="mt-0.5 h-4 w-4 shrink-0 text-accent-400"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.25"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                        set:html={check}
-                      />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href={t.cta.href}
-                  class={`mt-7 inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-medium transition-colors ${
-                    t.cta.primary
-                      ? "bg-accent-500 text-ink-950 hover:bg-accent-400"
-                      : "border border-ink-700 text-ink-100 hover:border-ink-600 hover:bg-ink-850"
-                  }`}
-                >
-                  {t.cta.label}
-                </a>
-              </div>
-            ))
-          }
-        </div>
-
-        <p class="mt-8 max-w-2xl text-sm leading-relaxed text-ink-400">
-          No public pricing on purpose. Every team's scope is different, so we
-          price after a short call once we understand what you actually need.
-          No sales pressure, no obligation.
-        </p>
-      </div>
-    </section>
-
-    <!-- What we do -->
+    <!-- The open ask -->
     <section class="border-b border-ink-800/60 bg-ink-900/40">
       <div class="mx-auto max-w-5xl px-6 py-20">
-        <p class="font-mono text-sm text-accent-400">What we actually do</p>
         <h2
-          class="mt-3 max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
+          class="max-w-3xl text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
         >
-          Services on top of the open core, not a locked-down version.
+          Running it across a team, or depending on it in production?
         </h2>
         <p class="mt-4 max-w-2xl text-lg leading-relaxed text-ink-300">
-          The core is open, simple, and yours to run for free forever. What you
-          can pay for is making it real in your environment and provable to your
-          auditors.
+          If you need more than the open binary gives you — help getting it
+          deployed, someone on the hook when it matters, or something we haven't
+          built yet — tell us what you're running and what you need.
         </p>
-
-        <div class="mt-12 grid gap-5 md:grid-cols-3">
-          {
-            services.map((s) => (
-              <div class="rounded-xl border border-ink-700 bg-ink-900 p-6">
-                <h3 class="text-base font-semibold text-ink-100">{s.title}</h3>
-                <p class="mt-2 text-sm leading-relaxed text-ink-300">{s.body}</p>
-              </div>
-            ))
-          }
-        </div>
+        <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-400">
+          We build what real users actually ask for, scoped per conversation. No
+          public pricing, no sales pressure, no obligation. The core stays free
+          either way — whatever we'd do for you sits on top of it.
+        </p>
+        <p class="mt-4 max-w-2xl text-base leading-relaxed text-ink-400">
+          People reach out about deployment, supervised setups across machines,
+          and response-time commitments — but the list is open. If what you need
+          isn't on it, tell us anyway.
+        </p>
       </div>
     </section>
 
@@ -217,7 +83,7 @@ const check = `<path d="M20 6 9 17l-5-5"/>`;
         <h2
           class="text-balance text-2xl font-semibold leading-snug tracking-tight text-ink-100 sm:text-3xl"
         >
-          Tell us what you are running, and we will tell you how we can help.
+          Tell us what you're running.
         </h2>
         <p class="mt-3 text-base leading-relaxed text-ink-400">
           A short message is enough. No sales pressure, no obligation. We reply
@@ -268,13 +134,14 @@ const check = `<path d="M20 6 9 17l-5-5"/>`;
 
           <label class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-ink-200">
-              What are you running, and what do you need?
+              What are you running, and what do you need Salvager to do that it
+              doesn't yet?
             </span>
             <textarea
               name="message"
               required
               rows="5"
-              placeholder="Environment, team size, what you're trying to make audit-ready or deploy..."
+              placeholder="What you're running it on, team size, and where the open binary stops being enough..."
               class="resize-y rounded-lg border border-ink-700 bg-ink-900 px-3.5 py-2.5 text-ink-100 placeholder:text-ink-500 transition-colors focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-accent-500"
             ></textarea>
           </label>
