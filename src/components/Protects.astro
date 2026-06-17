@@ -6,27 +6,36 @@
 // that the normal safety net cannot bring it back, then recovers it with
 // Salvager. Three tabs swap the scenario for three audiences.
 //
-// FIDELITY NOTES — where each scenario comes from:
+// FIDELITY NOTES — every tab's Salvager output is transcribed VERBATIM from the
+// built binary (cloned from github.com/usesalvager/salvager, run via `salvager
+// watch` over a throwaway repo). Hashes (8 hex chars), START column (bare file
+// line-1, no quotes, identical across a file's revisions), first-seen ΔLINES
+// (+N, the full line count), the stderr raw-ms block including the
+// "(timestamps below are human-readable; raw ms:)" line, and the restore line's
+// "(undo with: …)" suffix all come from real runs — not hand-authored. Restore
+// takes the raw epoch-ms (parseTS → ParseInt; it does NOT accept the hash), so
+// every restore uses an ms printed in that tab's own history block. Non-Salvager
+// scene output (pytest, go build, pandas shape) is illustrative.
 //
-//   git / uncommitted  — REAL. Mirrors salvager-go's
-//     TestE2E_A10_2_RecoverUncommittedWorkGitCannot (e2e_test.go) and
-//     docs/testing/GUIDE_A10_2.md + setup_a10_2.sh. The file is stats.py with an
-//     uncommitted, never-staged median(); the disaster is `git reset --hard
-//     HEAD`; the git-cannot proofs are `git reflog` and `git fsck --unreachable
-//     --lost-found --no-reflogs`; recovery is the documented CLI:
-//     `salvager history <file>` then `salvager restore <file> <ts>`. Command
-//     output matches main.go (history table + stderr raw-ms hint; restore lines).
+//   git / uncommitted  — stats.py gains an uncommitted median(); `git reset
+//     --hard HEAD` destroys it; `git reflog` + `git fsck` (prints nothing) show
+//     git has nothing; salvager history + restore bring it back.
 //
-//   dataset / csv  — ILLUSTRATIVE (not backed by a test). A pandas clean step
-//     overwrites a clean CSV in place after dropna() nukes most rows; the CSV is
-//     gitignored so git has nothing. Same real Salvager CLI recovers it.
+//   dataset / csv  — customers.csv is UNTRACKED working data (never committed —
+//     NOT gitignored: salvager honors .gitignore, so an ignored file would be
+//     skipped too). A clean step overwrites it in place, dropping 10,120 rows;
+//     `git checkout -- customers.csv` fails (pathspec unknown to git); salvager
+//     restores the first-seen full file.
 //
-//   document  — ILLUSTRATIVE (not backed by a test). An agent rewrites a section
-//     of a plain markdown file with weaker prose; no app-level history exists.
-//     Recovered with `salvager show` (inspect) then `salvager restore`.
+//   document  — an agent rewrites overview.md's Architecture section shorter via
+//     the CLI (bypassing any editor local history) and never commits; recovered
+//     by inspecting with `salvager show … | sed` then `salvager restore`.
 //
-// Both illustrative scenarios use only real Salvager verbs and realistic shell
-// output, in the same spirit as the A10.2 artifact. Kept honest on purpose.
+//   multi-file refactor  — a hand rename across watcher.go and cli.go (builds),
+//     then a blanket sed over-applies and breaks the build. The wanted state is
+//     the clean pre-sed rename — never committed or stashed (`git stash list` is
+//     empty), so git holds only the two ends. Each file restores to its pre-sed
+//     revision individually.
 //
 // Line kinds: a=agent message, c=shell command, o=command output,
 //   x=loss/failure beat, v=recovery/success beat, h=comment, b=blank spacer.
@@ -39,10 +48,10 @@ const scenarios = [
     sr: "Recovering uncommitted work that git reset --hard destroyed.",
     lines: [
       { k: "h", t: "extend stats.py with a median() helper and tests" },
-      { k: "a", t: "Added median() to stats.py with two tests. Running them." },
+      { k: "a", t: "Added median() to stats.py with a test. Running them." },
       { k: "c", t: "python -m pytest -q" },
-      { k: "o", t: "....                                          [100%]" },
-      { k: "o", t: "4 passed in 0.03s" },
+      { k: "o", t: "..                                            [100%]" },
+      { k: "o", t: "2 passed in 0.02s" },
       { k: "c", t: "git status --short" },
       { k: "o", t: " M stats.py" },
       { k: "o", t: " M test_stats.py" },
@@ -50,32 +59,33 @@ const scenarios = [
       { k: "b", t: "" },
       { k: "a", t: "Tidying the working tree before the next change." },
       { k: "c", t: "git reset --hard HEAD" },
-      { k: "o", t: "HEAD is now at 9f3c1a2 Initial: mean() with tests" },
+      { k: "o", t: "HEAD is now at 2f4a567 Initial: mean() with tests" },
       { k: "c", t: "grep median stats.py" },
       { k: "o", t: "(no match)" },
       { k: "x", t: "median() is gone from disk. It was never staged.", p: 1700 },
       { k: "a", t: "Trying to get it back through git." },
       { k: "c", t: "git reflog" },
-      { k: "o", t: "9f3c1a2 HEAD@{0}: reset: moving to HEAD" },
-      { k: "o", t: "9f3c1a2 HEAD@{1}: commit (initial): Initial: mean() with tests" },
+      { k: "o", t: "2f4a567 HEAD@{0}: reset: moving to HEAD" },
+      { k: "o", t: "2f4a567 HEAD@{1}: commit (initial): Initial: mean() with tests" },
       { k: "c", t: "git fsck --unreachable --lost-found --no-reflogs" },
-      { k: "o", t: "(no dangling blobs)" },
+      { k: "o", t: "(no output)" },
       { k: "x", t: "git never hashed the edit, so it has nothing to restore.", p: 1900 },
       { k: "b", t: "" },
       { k: "a", t: "Salvager watches the filesystem. It saved the edit the moment it hit disk." },
       { k: "c", t: "salvager history stats.py" },
-      { k: "o", t: "TIMESTAMP            HASH     LABEL       LINES  ΔLINES  START" },
-      { k: "o", t: "2026-06-16 14:07:55  a1b2c3d  modify      18     +11     \"def median(values):\"" },
-      { k: "o", t: "2026-06-16 14:02:10  4e9d2f0  first-seen  7      -       \"def mean(values):\"" },
+      { k: "o", t: "TIMESTAMP            HASH      LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-17 13:17:37  7beb3994  modify      10     +8      def mean(values):" },
+      { k: "o", t: "2026-06-17 13:17:36  0bb06820  first-seen  2      +2      def mean(values):" },
       { k: "o", t: "restore with: salvager restore stats.py <timestamp-ms>" },
-      { k: "o", t: "  1781964475000  modify" },
-      { k: "o", t: "  1781964130000  first-seen" },
+      { k: "o", t: "(timestamps below are human-readable; raw ms:)" },
+      { k: "o", t: "  1781695057720  modify" },
+      { k: "o", t: "  1781695056217  first-seen" },
       { k: "a", t: "The modify revision holds median(). Restoring it." },
-      { k: "c", t: "salvager restore stats.py 1781964475000" },
-      { k: "o", t: "restored stats.py to revision 1781964475000" },
-      { k: "o", t: "previous state saved as pre-restore revision 1781964900000" },
+      { k: "c", t: "salvager restore stats.py 1781695057720" },
+      { k: "o", t: "restored stats.py to revision 1781695057720" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781695072591 (undo with: salvager restore stats.py 1781695072591)" },
       { k: "c", t: "python -m pytest -q" },
-      { k: "o", t: "4 passed in 0.03s" },
+      { k: "o", t: "2 passed in 0.02s" },
       { k: "v", t: "median() is back, byte for byte. Salvager had it the whole time.", p: 600 },
     ],
   },
@@ -83,9 +93,9 @@ const scenarios = [
     id: "csv",
     tab: "dataset / csv",
     file: "customers.csv",
-    sr: "Recovering a clean CSV after an in-place overwrite dropped most rows.",
+    sr: "Recovering an untracked dataset after an in-place overwrite dropped most rows.",
     lines: [
-      { k: "h", t: "clean customers.csv: parse dates, drop the stray index column" },
+      { k: "h", t: "clean customers.csv: drop rows with any blank cell" },
       { k: "a", t: "Loading the dataset to check its shape." },
       { k: "c", t: "python -c \"import pandas as pd; print(pd.read_csv('customers.csv').shape)\"" },
       { k: "o", t: "(10432, 8)" },
@@ -95,27 +105,30 @@ const scenarios = [
       { k: "o", t: "wrote customers.csv" },
       { k: "c", t: "wc -l customers.csv" },
       { k: "o", t: "313 customers.csv" },
-      { k: "x", t: "dropna() removed every row with any blank cell. 10,120 rows gone.", p: 1700 },
-      { k: "a", t: "The script overwrote the file in place. Looking for a backup." },
+      { k: "x", t: "The clean step dropped every row with any blank cell. 10,120 rows gone.", p: 1700 },
+      { k: "a", t: "The script overwrote the file in place. customers.csv is generated data — never committed." },
       { k: "c", t: "git status --short" },
-      { k: "o", t: "(nothing — customers.csv is in .gitignore)" },
-      { k: "x", t: "No prior copy on disk and nothing in git. The clean data is gone.", p: 1900 },
+      { k: "o", t: "?? customers.csv" },
+      { k: "c", t: "git checkout -- customers.csv" },
+      { k: "o", t: "error: pathspec 'customers.csv' did not match any file(s) known to git" },
+      { k: "x", t: "git never had a version to restore — the file was only ever untracked working data.", p: 1900 },
       { k: "b", t: "" },
       { k: "a", t: "Salvager captured the file before the overwrite. Checking its history." },
       { k: "c", t: "salvager history customers.csv" },
-      { k: "o", t: "TIMESTAMP            HASH     LABEL       LINES  ΔLINES  START" },
-      { k: "o", t: "2026-06-16 11:48:03  7c1e9a4  modify      313    -10120  \"id,email,signup_date\"" },
-      { k: "o", t: "2026-06-16 11:31:20  b2f08d6  first-seen  10433  -       \"id,email,signup_date\"" },
+      { k: "o", t: "TIMESTAMP            HASH      LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-17 13:20:35  217a0601  modify      313    -10120  id,email,signup_date,country,plan,mrr,seats,last_seen" },
+      { k: "o", t: "2026-06-17 13:20:33  73ee4895  first-seen  10433  +10433  id,email,signup_date,country,plan,mrr,seats,last_seen" },
       { k: "o", t: "restore with: salvager restore customers.csv <timestamp-ms>" },
-      { k: "o", t: "  1781951280000  modify" },
-      { k: "o", t: "  1781950280000  first-seen" },
+      { k: "o", t: "(timestamps below are human-readable; raw ms:)" },
+      { k: "o", t: "  1781695235556  modify" },
+      { k: "o", t: "  1781695233954  first-seen" },
       { k: "a", t: "The first-seen revision is the full file. Restoring it." },
-      { k: "c", t: "salvager restore customers.csv 1781950280000" },
-      { k: "o", t: "restored customers.csv to revision 1781950280000" },
-      { k: "o", t: "previous state saved as pre-restore revision 1781952600000" },
+      { k: "c", t: "salvager restore customers.csv 1781695233954" },
+      { k: "o", t: "restored customers.csv to revision 1781695233954" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781695237013 (undo with: salvager restore customers.csv 1781695237013)" },
       { k: "c", t: "wc -l customers.csv" },
       { k: "o", t: "10433 customers.csv" },
-      { k: "v", t: "All 10,432 rows back. The clean dataset never touched git, but Salvager had it.", p: 600 },
+      { k: "v", t: "All 10,432 rows back. The data was never in git, but Salvager had every revision.", p: 600 },
     ],
   },
   {
@@ -127,29 +140,93 @@ const scenarios = [
       { k: "h", t: "tighten the Architecture section of overview.md" },
       { k: "a", t: "Rewriting the Architecture section to be more concise." },
       { k: "c", t: "wc -l overview.md" },
-      { k: "o", t: "214 overview.md" },
-      { k: "a", t: "Replaced lines 40-96 with a shorter draft.", p: 1300 },
+      { k: "o", t: "29 overview.md" },
+      { k: "a", t: "Replaced the section with a shorter draft.", p: 1300 },
       { k: "c", t: "wc -l overview.md" },
-      { k: "o", t: "168 overview.md" },
-      { k: "x", t: "The rewrite dropped the data-flow walkthrough and the failure-mode notes.", p: 1700 },
-      { k: "a", t: "It is a plain file. The editor has no undo across sessions." },
+      { k: "o", t: "20 overview.md" },
+      { k: "x", t: "The rewrite dropped the coalescing note and the failure-mode paragraph.", p: 1700 },
+      { k: "a", t: "The agent edited over the CLI, not the editor — so the editor's local history never saw it, and it was not committed." },
       { k: "x", t: "The stronger original prose is gone from disk.", p: 1900 },
       { k: "b", t: "" },
       { k: "a", t: "Salvager keeps a revision per save. Listing them." },
       { k: "c", t: "salvager history overview.md" },
-      { k: "o", t: "TIMESTAMP            HASH     LABEL       LINES  ΔLINES  START" },
-      { k: "o", t: "2026-06-16 09:22:41  d4a7b10  modify      168    -46     \"# Project overview\"" },
-      { k: "o", t: "2026-06-16 09:05:12  1f6c83e  first-seen  214    -       \"# Project overview\"" },
-      { k: "a", t: "Inspecting the earlier revision before I touch anything." },
-      { k: "c", t: "salvager show overview.md 1781938512000" },
+      { k: "o", t: "TIMESTAMP            HASH      LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-17 13:15:54  2d5fc559  modify      20     -9      # Project overview" },
+      { k: "o", t: "2026-06-17 13:15:53  e2a7aae1  first-seen  29     +29     # Project overview" },
+      { k: "o", t: "restore with: salvager restore overview.md <timestamp-ms>" },
+      { k: "o", t: "(timestamps below are human-readable; raw ms:)" },
+      { k: "o", t: "  1781694954915  modify" },
+      { k: "o", t: "  1781694953411  first-seen" },
+      { k: "a", t: "Inspecting the first-seen revision before I touch anything." },
+      { k: "c", t: "salvager show overview.md 1781694953411 | sed -n '12,16p'" },
       { k: "o", t: "## Architecture" },
-      { k: "o", t: "Writes flow through the watcher, which debounces bursts, hashes" },
-      { k: "o", t: "each file, and appends a revision. Recovery reads that log back ..." },
-      { k: "a", t: "That is the fuller version. Restoring it." },
-      { k: "c", t: "salvager restore overview.md 1781938512000" },
-      { k: "o", t: "restored overview.md to revision 1781938512000" },
-      { k: "o", t: "previous state saved as pre-restore revision 1781939400000" },
+      { k: "o", t: "" },
+      { k: "o", t: "Writes flow through the watcher, which debounces bursts, hashes each" },
+      { k: "o", t: "file, and appends a revision to an append-only log. Recovery reads that" },
+      { k: "o", t: "log back and reconstructs the requested revision byte for byte." },
+      { k: "a", t: "That is the fuller version. Restoring it by its raw ms." },
+      { k: "c", t: "salvager restore overview.md 1781694953411" },
+      { k: "o", t: "restored overview.md to revision 1781694953411" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781694961626 (undo with: salvager restore overview.md 1781694961626)" },
       { k: "v", t: "The original Architecture section is back. Salvager had every revision.", p: 600 },
+    ],
+  },
+  {
+    id: "refactor",
+    tab: "multi-file refactor",
+    file: "watcher.go",
+    sr: "Recovering the last-good pass of a multi-file refactor after a later pass broke the build.",
+    lines: [
+      { k: "h", t: "rename Session -> Run across watcher.go and cli.go" },
+      { k: "a", t: "Renamed the type and its call sites in both files by hand. Build is green." },
+      { k: "c", t: "go build ./..." },
+      { k: "o", t: "(ok)" },
+      { k: "a", t: "Now a blanket sed to catch any stragglers across the package.", p: 1300 },
+      { k: "c", t: "grep -rl Session . | xargs sed -i 's/Session/Run/g'" },
+      { k: "o", t: "(rewrote watcher.go, cli.go)" },
+      { k: "c", t: "go build ./..." },
+      { k: "o", t: "# github.com/usesalvager/watcher" },
+      { k: "o", t: "watcher.go:9:14: undefined: cfg.RunTimeout" },
+      { k: "x", t: "The sed also hit cfg.SessionTimeout, a config key that had to stay. The build is broken.", p: 1700 },
+      { k: "a", t: "I want the hand-rename back, without losing it to a full reset. It was never committed." },
+      { k: "c", t: "git stash list" },
+      { k: "o", t: "(empty)" },
+      { k: "x", t: "Nothing was committed or stashed between the rename and the sed. git has only the old code and the broken tree.", p: 1900 },
+      { k: "b", t: "" },
+      { k: "a", t: "Salvager recorded every save. The clean pre-sed revision of each file is in its history." },
+      { k: "c", t: "salvager history watcher.go" },
+      { k: "o", t: "TIMESTAMP            HASH      LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-17 13:02:33  1c3a997b  modify      17     +1      package watcher" },
+      { k: "o", t: "2026-06-17 13:02:31  85fb497d  modify      16     +0      package watcher" },
+      { k: "o", t: "2026-06-17 13:02:30  af46411e  first-seen  16     +16     package watcher" },
+      { k: "o", t: "restore with: salvager restore watcher.go <timestamp-ms>" },
+      { k: "o", t: "(timestamps below are human-readable; raw ms:)" },
+      { k: "o", t: "  1781694153232  modify" },
+      { k: "o", t: "  1781694151932  modify" },
+      { k: "o", t: "  1781694150430  first-seen" },
+      { k: "a", t: "The 13:02:31 revision is the clean rename — before the sed. Restoring it." },
+      { k: "c", t: "salvager restore watcher.go 1781694151932" },
+      { k: "o", t: "restored watcher.go to revision 1781694151932" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781694161069 (undo with: salvager restore watcher.go 1781694161069)" },
+      { k: "v", t: "Restore is non-destructive — the broken tree is kept as its own revision, so the recovery itself is reversible.", p: 1300 },
+      { k: "b", t: "" },
+      { k: "a", t: "Same for cli.go, the other file the sed touched." },
+      { k: "c", t: "salvager history cli.go" },
+      { k: "o", t: "TIMESTAMP            HASH      LABEL       LINES  ΔLINES  START" },
+      { k: "o", t: "2026-06-17 13:02:34  57a69357  modify      9      +1      package watcher" },
+      { k: "o", t: "2026-06-17 13:02:32  c8fe5c77  modify      8      +0      package watcher" },
+      { k: "o", t: "2026-06-17 13:02:30  7a70eda4  first-seen  8      +8      package watcher" },
+      { k: "o", t: "restore with: salvager restore cli.go <timestamp-ms>" },
+      { k: "o", t: "(timestamps below are human-readable; raw ms:)" },
+      { k: "o", t: "  1781694154432  modify" },
+      { k: "o", t: "  1781694152033  modify" },
+      { k: "o", t: "  1781694150430  first-seen" },
+      { k: "c", t: "salvager restore cli.go 1781694152033" },
+      { k: "o", t: "restored cli.go to revision 1781694152033" },
+      { k: "o", t: "previous state saved as pre-restore revision 1781694161076 (undo with: salvager restore cli.go 1781694161076)" },
+      { k: "c", t: "go build ./..." },
+      { k: "o", t: "(ok)" },
+      { k: "v", t: "Both files back to the clean rename — the sed undone, the refactor kept. A state git never held.", p: 600 },
     ],
   },
 ];
@@ -251,11 +328,6 @@ const marker = (k) =>
           </div>
         ))
       }
-
-      <p class="mt-3 font-mono text-xs text-ink-500">
-        Replays automatically. The git case mirrors Salvager's A10.2 end-to-end
-        test, command for command.
-      </p>
     </div>
   </div>
 </section>
