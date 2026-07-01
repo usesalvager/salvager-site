@@ -8,7 +8,8 @@ import sitemap from '@astrojs/sitemap';
 // HTML/CSS into dist/, deployable to any static host.
 export default defineConfig({
   site: 'https://salvager.sh',
-  integrations: [sitemap()],
+  // Keep the JSON feeds (STIX bundles) out of the sitemap — pages only.
+  integrations: [sitemap({ filter: (page) => !page.includes('.json') })],
   vite: {
     plugins: [tailwindcss()],
   },
